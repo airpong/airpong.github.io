@@ -1,0 +1,87 @@
+# 백준 4358
+
+## 문제정의 및 접근
+
+- Trie 문제로 보고 접근
+- 끝이 날때마다 해당 노드의 cnt 값을 증가시켜줌
+- trie 구조 사용시 print 를 위한 정렬을 따로 하지 않아도 된다.
+- 하지만 모든 노드를 방문해야 하는 복잡도를 생각하면 시간 초과가 날수 있다고 생각
+- Hash 로 접근할려 했지만 정렬을 다시 해야 하는 것을 고려하면 trie 가 더 나을수도 있을수 있음.
+
+### 구현
+
+```c++
+#include <stdio.h>
+#define charsize 30
+#define treenum 10000
+
+int idx;
+char tmp[31];
+int total=0;
+
+struct Trie{
+    int cnt;
+    int next[128];
+}tries[treenum*charsize];
+
+Trie *newTrie(){
+    tries[idx].cnt=0;
+    return &tries[idx++];
+}
+
+void print(Trie *node,int pos){
+    if(node->cnt>0){
+        tmp[pos]='\0';
+        printf("%s %.4lf\n", tmp, 100.0*(node->cnt)/total);
+    }
+    else{
+        for(int i=0;i<128;i++){
+            if(node->next[i]!= 0){
+                tmp[pos] = (i + ' ');       //형변환 안하고 넣어도 될거같은데 한번 해보자~!
+                print(&tries[node->next[i]],pos+1);
+            }
+        }
+    }
+
+}
+
+int main() {
+    idx = 0;
+    Trie *root = newTrie();
+    while(true){
+        fgets(tmp,31,stdin);
+        if(*tmp=='\n'){
+            break;
+        }
+        total+=1;
+        Trie *cur = root;
+        char *point = tmp;
+        while(true){
+            if(*point=='\n'){     //종료조건
+                cur->cnt +=1;
+                break;
+            }
+            else{
+                int cntchar = *point-' ';
+                if(cur->next[cntchar] == 0){
+                    Trie *node = newTrie();
+                    cur->next[cntchar]=idx-1;
+                }
+                cur = &tries[cur->next[cntchar]];
+                point+=1;
+            }
+        }
+    }
+    print(root,0);
+    return 0;
+}
+```
+
+- 함수 재귀 호출로 인한 복잡도 증가를 고려해 반복문으로 입력 수행
+- print 는 현재 pos 값을 알고있어야 하기 때문에 재귀적으로 구현
+- 처음 node의 자식을 int 값이 아닌 node 포인트 배열로 구현했더니 메모리 초과가 남.
+- 이후 int 값으로 연결을 시켜주니 메모리 초과 해결 / 하지만 시간 초과가 남
+- 기본적으로 126개의 자식을 다 보는 시간을 무시하기 힘들다고 생각
+- 해싱으로 다시 접근! 정렬은 어떻게…?
+- 입력하는 부분의 구현을 바꾸니 통과 / 메모리 : 114488kb 수행시간 : 324ms
+
